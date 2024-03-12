@@ -5,3 +5,4 @@ May get extended to simple division or even just plus / minus, depending on feed
 
 Oh and the few words it uses are in German.
 
+https://chhu.github.io/mathgame/
