@@ -1,0 +1,1 @@
+Write a single page html multiplication game for children. Present two random numbers between 1 and 12 that the kid needs to multiply. The kid can select the answer in a multiple choice way with a single key-stroke (like 1 2 3 or 4), receiving points for the correct answer.

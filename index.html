@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplication Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: beige;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #000000;
+        }
+        #progressBar {
+            width: 100%;
+            height: 45px;
+            background-color: rgb(116, 52, 194);
+            animation: shrink 3ms forwards; /* Adjust the time in seconds as needed */
+        }
+
+        @keyframes shrink {
+            0% {
+                width: 100%;
+                background-color: rgb(0, 255, 47);
+            }
+            100% {
+                width: 0%;
+                background-color: rgb(213, 95, 11);
+            }
+        }
+
+        .game {
+            text-align: center;
+            font-size: 100px;
+        }
+        #result {
+            font-size: 50px;
+        }
+        #score {
+            font-size: 50px;
+            font-weight: bold;
+        }
+        #togo {
+            font-size: 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+        #stars {
+            font-size: 30px;
+            position: fixed;
+            top: 30px;
+            left: 0;
+        }
+    </style>
+</head>
+<body onkeypress="checkAnswer(event)" onload="start()">
+    <div id="togo"></div>
+    <div id="stars"></div>
+    <div class="game">
+        <p id="question"></p>
+        <p id="result"></p>
+        <div id="progressBar"></div>
+        <p id="score"></p>
+    </div>
+    <script>
+        let currentQuestion;
+        let score = 0;
+        let stars = 0;
+        let togo = 30;
+        let user = "nobody";
+        function start() {
+            user = prompt("Name?");
+            if (!user)
+                user = "nobody";
+            newQuestion();
+        }
+
+        function baranim(ms_duration) {
+            let pb = document.getElementById("progressBar");
+            pb.style.width = "100%";
+            pb.style.animation = "none";
+            void pb.offsetWidth;
+            void pb.offsetHeight;
+            pb.style.animation = null;
+            pb.style.animationDuration = "" + ms_duration + "ms";
+            pb.style.animationIterationCount = 1;
+        }
+
+        function generateQuestion() {
+            const num1 = Math.floor(Math.random() * 12) + 1;
+            const num2 = Math.floor(Math.random() * 12) + 1;
+            const key = num1 < num2 ? `${num1}x${num2}` : `${num2}x${num1}`;
+            document.getElementById("score").textContent = 'Punkte: ' + score;
+            document.getElementById("question").textContent = `${num1} ● ${num2} = ?`;
+            var lso = JSON.parse(localStorage[user] || "{}");
+            lso = lso[key] || {};
+            lso.n1 = num1; lso.n2 = num2; lso.key = key;
+            if (lso.bestDuration)
+                baranim(Math.floor(lso.bestDuration));
+            else
+                baranim(1);
+            lso.start = performance.now();
+            return lso;
+        }
+
+        function checkAnswer(event) {
+            let duration = performance.now() - currentQuestion.start;
+            duration = Math.max(600, duration);
+            let durationBonus = Math.max(1, 10000 / duration); // between 1 and 10
+            let delta_score = 0;
+            const userAnswer = typeof(event) == "number" ? event : parseInt(event.key);
+            if (currentQuestion.choice[userAnswer-1] === currentQuestion.n1 * currentQuestion.n2) {
+                document.body.style.backgroundColor = "green";
+                bestDuration = currentQuestion.bestDuration || duration; // default 10s
+                if (duration <= bestDuration) {
+                    if (duration < bestDuration)
+                        stars++;
+                    currentQuestion.bestDuration = duration;
+                }
+                delta_score = Math.round(9 * durationBonus); 
+                score += delta_score;
+                console.log("scored " + 9 * durationBonus + " bonus: " + durationBonus);             
+            } else {
+                document.body.style.backgroundColor = "red";
+                delta_score = Math.round(-4 * durationBonus); 
+                score += delta_score;
+            }
+            currentQuestion.userAnswer = userAnswer - 1;
+
+            document.getElementById("score").textContent = 'Punkte: ' + (score-delta_score) + " " + (delta_score >= 0? "+" + delta_score : delta_score);
+            setTimeout(newQuestion, 400);
+
+            var lso = JSON.parse(localStorage[user] || "{}");
+            lso[currentQuestion.key] = currentQuestion;
+            localStorage[user] = JSON.stringify(lso);
+        }
+
+        function newQuestion() {
+            if (togo == 0) {
+                alert("Zu Ende! Punkte: " + score + " Sterne gesammelt: " + stars);
+                togo = 40;
+                score = 0;
+                stars = 0;                
+            }
+            document.body.style.backgroundColor = "black";
+            currentQuestion = generateQuestion();
+            currentQuestion.choice = Array.from({length: 4}, () => Math.floor(Math.random() * 139) + 1);
+            currentQuestion.choice[Math.floor(Math.random() * 3.9999)] = currentQuestion.n1 * currentQuestion.n2;
+            document.getElementById("result").innerHTML = `<span onclick="checkAnswer(1)">❶  ${currentQuestion.choice[0]} </span> |<span onclick="checkAnswer(2)"> ❷  ${currentQuestion.choice[1]} </span>|<span onclick="checkAnswer(3)"> ❸  ${currentQuestion.choice[2]} </span>|<span onclick="checkAnswer(4)"> ❹  ${currentQuestion.choice[3]} </span>`;
+            document.getElementById("score").textContent = 'Punkte: ' + score;
+            document.getElementById("togo").textContent = 'Noch ' + togo;
+            document.getElementById("stars").textContent = 'Sterne: ' + '⭐'.repeat(stars);
+            togo--;                
+        }
+    </script>
+</body>
+</html>
